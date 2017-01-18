@@ -32,7 +32,11 @@ Afin de répondre aux différents problèmes, vous allez avoir besoin de créer 
 À vous de jouer ! Écrivez les requêtes MongoDB permettant de résoudre les problèmes posés.
 
 ```
-TODO : ajouter les requêtes MongoDB ici
+
+> db.calls.aggregate([ {"$group": {_id:"$category", count:{$sum:1}}} ])
+{ "_id" : "Traffic", "count" : 54549 }
+{ "_id" : "Fire", "count" : 23056 }
+{ "_id" : "EMS", "count" : 75589 }
 ```
 
 Vous allez sûrement avoir besoin de vous inspirer des points suivants de la documentation :
