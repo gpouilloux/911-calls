@@ -16,6 +16,8 @@ var insertCalls = function(db, callback) {
             var call = {
               latitude: data.lat,
               longitude: data.lng,
+              location : { type: "Point", coordinates:
+                [ parseFloat(data.lng), parseFloat(data.lat) ] },
               description: data.desc,
               zip: data.zip,
               category: category,
