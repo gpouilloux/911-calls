@@ -32,12 +32,6 @@ Afin de répondre aux différents problèmes, vous allez avoir besoin de créer 
 À vous de jouer ! Écrivez les requêtes MongoDB permettant de résoudre les problèmes posés.
 
 ```
-# Group by category and count
-> db.calls.aggregate([ {"$group": {_id:"$category", count:{$sum:1}}} ])
-{ "_id" : "Traffic", "count" : 54549 }
-{ "_id" : "Fire", "count" : 23056 }
-{ "_id" : "EMS", "count" : 75589 }
-
 # Create a 2dsphere index for location field
 > db.calls.createIndex( { location : "2dsphere" } )
 {
@@ -46,6 +40,65 @@ Afin de répondre aux différents problèmes, vous allez avoir besoin de créer 
 	"numIndexesAfter" : 2,
 	"ok" : 1
 }
+
+# Compter le nombre d'appels autour de Lansdale dans un rayon de 500 mètres
+> db.calls.count({
+  location: {
+      $near: {
+        $geometry: { type: "Point", coordinates: [-75.283783, 40.241493] },
+        $minDistance: 0,
+        $maxDistance: 500
+      }
+  }
+})
+
+# Compter le nombre d'appels par catégorie
+> db.calls.aggregate([ {"$group": {_id:"$category", count:{$sum:1}}} ])
+{ "_id" : "Traffic", "count" : 54549 }
+{ "_id" : "Fire", "count" : 23056 }
+{ "_id" : "EMS", "count" : 75589 }
+
+# Trouver les 3 mois ayant comptabilisés le plus d'appels
+> db.calls.aggregate([
+   {
+     "$project": {
+       month:
+       { "$cond": [
+           { "$lte": [ { "$month": "$timestamp" }, 9 ] },
+           { "$concat": [
+               "0", { "$substr": [ { "$month": "$timestamp" }, 0, 2 ] }
+           ]},
+           { "$substr": [ { "$month": "$timestamp" }, 0, 2 ] }
+       ]},
+       year: { $year: "$timestamp" },
+     }
+   },
+   {
+     "$project": {
+       monthYear: { $concat: [ {$substr:["$month",0,2]}, "/", {$substr:["$year",0,4]} ] }
+     }
+   },
+   {"$group": {_id:"$monthYear", count:{$sum:1}}},
+   {"$sort": { "count": -1 }},
+   {"$limit": 3}
+ ])
+{ "_id" : "01/2016", "count" : 13084 }
+{ "_id" : "10/2016", "count" : 12502 }
+{ "_id" : "12/2016", "count" : 12162 }
+
+# Create an text index on 911-calls' title
+> db.calls.createIndex( { title: "text" } )
+
+# Trouver le top 3 des villes avec le plus d'appels pour overdose
+> db.calls.aggregate([
+    { $match: { $text: { $search: "OVERDOSE" } } },
+    {"$group": {_id:"$district", count:{$sum:1}}},
+    {"$sort": { "count": -1 }},
+    {"$limit": 3}
+])
+{ "_id" : "POTTSTOWN", "count" : 203 }
+{ "_id" : "NORRISTOWN", "count" : 180 }
+{ "_id" : "UPPER MORELAND", "count" : 110 }
 ```
 
 Vous allez sûrement avoir besoin de vous inspirer des points suivants de la documentation :

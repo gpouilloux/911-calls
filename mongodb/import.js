@@ -24,7 +24,7 @@ var insertCalls = function(db, callback) {
               title: title,
               district: data.twp,
               address: data.addr,
-              timestamp: data.timeStamp
+              timestamp: new Date(data.timeStamp)
             };
             calls.push(call);
         })
